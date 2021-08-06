@@ -1,3 +1,8 @@
+# envs
+dev.json
+test.json
+prod.json
+
 # Logs
 logs
 *.log
