@@ -4,8 +4,8 @@ const logger = require('morgan')
 const helmet = require('helmet')
 const cors = require('cors')
 
-const { v1 } = require('./apis')
-require('./database').connect()
+const { v1 } = require('./api')
+require('./database').mongodb()
 
 const server = express()
 
