@@ -1,3 +1,6 @@
+const { connect, repositories } = require('./mongodb')
+
 module.exports = {
-  connect: require('./connect')
+  mongodb: connect,
+  mongoRepositories: repositories
 }

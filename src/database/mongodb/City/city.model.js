@@ -12,7 +12,12 @@ const schema = new Schema({
   },
   img: {
     type: String,
-    required: true
+    required: true,
+    default: 'https://cdn.pixabay.com/photo/2018/09/07/14/11/city-3660779_960_720.jpg'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 })
 
