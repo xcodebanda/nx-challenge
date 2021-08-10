@@ -4,8 +4,8 @@ const logger = require('morgan')
 const helmet = require('helmet')
 const cors = require('cors')
 
-const { v1 } = require('./api')
-require('./database').mongodb()
+const { v1 } = require('./routes')
+require('./config').connectDB()
 
 const server = express()
 
@@ -16,9 +16,9 @@ server.use(helmet())
 server.use(cors())
 
 if (process.env.NODE_ENV !== 'production') {
-  server.use(logger('combined'))
+  server.use(logger('dev'))
 }
 
-server.use('/api/v1', v1)
+server.use('/api/v1/cities', v1.cityRoutes)
 
 module.exports = server
