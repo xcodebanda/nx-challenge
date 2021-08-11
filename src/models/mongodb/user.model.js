@@ -27,10 +27,14 @@ const schema = new Schema({
     type: String,
     required: true
   },
+  isGoogleAccount: {
+    type: Boolean,
+    default: false
+  },
   isActive: {
     type: Boolean,
     default: true
   }
 })
 
-module.exports = model('User', schema)
+module.exports = model('user', schema)
