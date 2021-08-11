@@ -26,7 +26,7 @@ const schema = new Schema({
   comments: [{
     userId: {
       type: SchemaTypes.ObjectId,
-      ref: 'User'
+      ref: 'user'
     },
     test: String,
     userPic: String,
@@ -35,7 +35,7 @@ const schema = new Schema({
   usersLike: [String],
   cityId: {
     type: SchemaTypes.ObjectId,
-    ref: 'City'
+    ref: 'city'
   },
   isActive: {
     type: Boolean,

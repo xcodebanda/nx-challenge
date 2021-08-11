@@ -1,4 +1,5 @@
 const { connect } = require('mongoose')
+require('dotenv/config')
 
 module.exports = async () => {
   const uri = process.env.MONGO_URI

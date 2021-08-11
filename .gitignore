@@ -1,9 +1,7 @@
 __tests__/
 
 # envs
-dev.json
-test.json
-prod.json
+.env
 
 # Logs
 logs

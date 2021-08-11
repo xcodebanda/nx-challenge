@@ -1,14 +1,16 @@
-const { request, response } = require('express')
 const { validationResult } = require('express-validator')
+const { request, response } = require('express')
+require('dotenv/config')
+
+const RequestReponse = require('./req.response')
 
 module.exports = fn => (req = request, res = response) => {
   const errors = validationResult(req)
-  console.log(errors.array())
+
   if (!errors.isEmpty()) {
-    return res.status(400).json({
-      errors: errors.array(),
-      status: 400
-    })
+    return res.status(400).json(RequestReponse.validations(
+      'Some data are wrong', errors.array(), 400
+    ))
   }
 
   fn(req, res).catch((error) => {
@@ -16,9 +18,8 @@ module.exports = fn => (req = request, res = response) => {
       console.log(error.message)
     }
 
-    res.status(500).json({
-      message: 'Internal server error',
-      status: 500
-    })
+    res.status(500).json(RequestReponse.fail(
+      'Internal Server Error', 500
+    ))
   })
 }

@@ -1,3 +1,4 @@
 module.exports = {
-  cityRoutes: require('./city.routes')
+  cityRoutes: require('./city.routes'),
+  userRoutes: require('./user.routes')
 }
