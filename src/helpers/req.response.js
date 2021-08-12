@@ -1,4 +1,4 @@
-class Response {
+class RequestResponse {
   static validations (message, errors, status) {
     return {
       success: false,
@@ -25,4 +25,4 @@ class Response {
   }
 }
 
-module.exports = Response
+module.exports = RequestResponse

@@ -44,10 +44,9 @@ exports.signUp = __catch(async (req = request, res = response) => {
 
   const user = UserDTO.signUp(result)
 
-  res.status(201).json({
-    status: 201,
-    user
-  })
+  res.status(201).json(
+    RequestReponse.success(201, user)
+  )
 })
 
 exports.signIn = __catch(async (req = request, res = response) => {
@@ -57,8 +56,7 @@ exports.signIn = __catch(async (req = request, res = response) => {
     UserDTO.token(user[0])
   )
 
-  res.status(200).json({
-    success: true,
-    token
-  })
+  res.status(200).json(
+    RequestReponse.success(200, token)
+  )
 })
