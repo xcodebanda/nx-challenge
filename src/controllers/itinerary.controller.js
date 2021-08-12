@@ -36,6 +36,7 @@ exports.checkUser = __catch(async (req = request, res = response) => {
   const arrayOwnerCheck = itinerary[0].comments.filter(
     c => String(c.userId) === String(req.user._id)
   )
+
   const likedChek = itinerary[0].usersLike.some(
     id => String(id) === String(req.user._id)
   )
@@ -44,7 +45,7 @@ exports.checkUser = __catch(async (req = request, res = response) => {
     RequestReponse.success(
       200,
       {
-        arrayOwnerCheck,
+        arrayOwnerCheck: arrayOwnerCheck.map(c => c._id),
         likedChek
       }
     )
@@ -79,16 +80,21 @@ exports.addComment = __catch(async (req = request, res = response) => {
   }
 
   itinerary[0].comments.push(
-    { // TODO: use DTO/Repositories
+    {
       _id: Types.ObjectId(),
       userId: req.user._id,
       text: req.body.text,
       userPic: req.user.userPic,
       userName: `${req.user.firstName} ${req.user.lastName}`
+    // TODO: Create Comment Model & use DTO/Repositories
     }
   )
 
-  const result = await repository.updateItineraryByID(req.params.itineraryId, itinerary[0])
+  const result = await repository.updateItineraryByID(
+    req.params.itineraryId,
+    itinerary[0]
+  )
+
   res.status(200).json(
     RequestReponse.success(
       200,
@@ -97,6 +103,48 @@ exports.addComment = __catch(async (req = request, res = response) => {
         arrayUserComments: result.comments.filter(
           comment => String(comment.userId) === String(req.user._id)
         )
+      }
+    )
+  )
+})
+
+exports.deleteComment = __catch(async (req = request, res = response) => {
+  const itinerary = await repository.getItineraries({ _id: req.params.itineraryId })
+
+  if (itinerary.length === 0) {
+    return res.status(404).json(
+      RequestReponse.fail(
+        'Itinerary was not found',
+        404
+      )
+    )
+  }
+
+  const comments = itinerary[0].comments.filter(
+    c => String(c._id) !== String(req.params.commentId)
+  )
+
+  if (comments.length === itinerary[0].comments.length) {
+    return res.status(404).json(
+      RequestReponse.fail(
+        'Comment was not found',
+        404
+      )
+    )
+  } else {
+    itinerary[0].comments = comments
+  }
+
+  await repository.updateItineraryByID(
+    req.params.itineraryId,
+    itinerary[0]
+  )
+
+  res.status(200).json(
+    RequestReponse.success(
+      200,
+      {
+        response: comments
       }
     )
   )
