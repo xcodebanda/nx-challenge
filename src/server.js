@@ -25,7 +25,8 @@ if (process.env.NODE_ENV !== 'production') {
   server.use(logger('dev'))
 }
 
-server.use('/api/v1/cities', v1.cityRoutes)
 server.use('/api/v1/users', v1.userRoutes)
+server.use('/api/v1/cities', v1.cityRoutes)
+server.use('/api/v1/itineraries', v1.itineraryRoutes)
 
 module.exports = server

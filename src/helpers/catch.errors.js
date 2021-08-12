@@ -9,7 +9,7 @@ module.exports = fn => (req = request, res = response) => {
 
   if (!errors.isEmpty()) {
     return res.status(400).json(RequestReponse.validations(
-      'Some data are wrong', errors.array(), 400
+      'Some data are wrong', errors.array().map(error => error.msg), 400
     ))
   }
 
