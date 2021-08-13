@@ -1,3 +1,3 @@
 module.exports = {
-  mongodbRepositories: require('./mongodb')
+  mongoose: require('./mongoose')
 }

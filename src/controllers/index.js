@@ -1,5 +1,5 @@
 module.exports = {
-  cityController: require('./city.controller'),
-  userController: require('./user.controller'),
-  itineraryController: require('./itinerary.controller')
+  User: require('./user.controller'),
+  City: require('./city.controller'),
+  Itinerary: require('./itinerary.controller')
 }

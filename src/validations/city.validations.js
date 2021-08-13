@@ -1,5 +1,5 @@
 const { body } = require('express-validator')
-const { cityRepository: repository } = require('../repositories/mongodb')
+const { City: repository } = require('../repositories/mongoose')
 
 exports.addCityChecks = [
   body('name', 'Name is required')
@@ -8,7 +8,6 @@ exports.addCityChecks = [
   body('name')
     .custom(async name => {
       const result = await repository.getCities({ name })
-      console.log('VALOR:', name, 'FIN', name.length, result)
       if (result.length > 0) throw new Error(`${name} already exists`)
     }),
   body('country', 'Country is required')

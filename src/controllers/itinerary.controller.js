@@ -1,32 +1,33 @@
 const { request, response } = require('express')
-const { Types } = require('mongoose')
 
-const { __catch, RequestReponse } = require('../helpers')
-const { itineraryRepository: repository } = require('../repositories/mongodb')
+const { Itinerary: repository } = require('../repositories/mongoose')
+const { RequestCatch: _catch } = require('../helpers')
 
-exports.getCityItineraries = __catch(async (req = request, res = response) => {
-  const opt = { cityId: req.params.cityid }
-  if (req.query.all !== '') opt.isActive = true
+exports.getItinerariesByCity = _catch(async (req = request, res = response) => {
+  const itinerariesPromise = repository.getItineraries({ cityId: req.params.cityId })
+  const totalPromise = repository.totalItineraries()
 
-  const totalPromise = repository.getTotal(opt)
-  const itinerariesPromise = repository.getItineraries(opt)
+  const [itineraries, total] = await Promise.all([
+    itinerariesPromise, totalPromise
+  ])
 
-  const [itineraries, total] = await Promise.all([itinerariesPromise, totalPromise])
-  const result = RequestReponse.success(200, itineraries)
-
-  result.total = total
-  res.status(200).json(result)
+  res.status(200).json({
+    itineraries,
+    ok: true,
+    total
+  })
 })
 
-exports.addItinerary = __catch(async (req = request, res = response) => {
-  const result = await repository.addItinerary(req.body)
+exports.addItinerary = _catch(async (req = request, res = response) => {
+  const itinerary = await repository.addItinerary(req.body)
 
-  res.status(201).json(
-    RequestReponse.success(201, result)
-  )
+  res.status(201).json({
+    itinerary,
+    ok: true
+  })
 })
 
-exports.checkUser = __catch(async (req = request, res = response) => {
+exports.checkUser = _catch(async (req = request, res = response) => {
   const itinerary = await repository.getItineraries(
     {
       _id: req.params.itineraryId
@@ -41,111 +42,149 @@ exports.checkUser = __catch(async (req = request, res = response) => {
     id => String(id) === String(req.user._id)
   )
 
-  res.status(200).json(
-    RequestReponse.success(
-      200,
-      {
-        arrayOwnerCheck: arrayOwnerCheck.map(c => c._id),
-        likedChek
-      }
-    )
-  )
+  res.status(200).json({
+    response: {
+      arrayOwnerCheck: arrayOwnerCheck.map(c => c._id),
+      likedChek
+    }
+  })
 })
 
-exports.likes = __catch(async (req = request, res = response) => {
-  const itinerary = await repository.getItineraries({ _id: req.params.itineraryId })
-  const liked = itinerary[0].usersLike.some(id => id === req.user._id)
-
-  res.status(200).json(
-    RequestReponse.success(
-      200,
-      {
-        likes: itinerary[0].likes,
-        liked
-      }
-    )
-  )
-})
-
-exports.addComment = __catch(async (req = request, res = response) => {
-  const itinerary = await repository.getItineraries({ _id: req.params.itineraryId })
-
-  if (itinerary.length === 0) {
-    return res.status(404).json(
-      RequestReponse.fail(
-        'Itinerary was not found',
-        404
-      )
-    )
-  }
-
-  itinerary[0].comments.push(
+exports.addComment = _catch(async (req = request, res = response) => {
+  const itinerary = await repository.updateItinerary(
     {
-      _id: Types.ObjectId(),
-      userId: req.user._id,
-      text: req.body.text,
-      userPic: req.user.userPic,
-      userName: `${req.user.firstName} ${req.user.lastName}`
-    // TODO: Create Comment Model & use DTO/Repositories
+      _id: req.params.itineraryId
+    },
+    {
+      $push: {
+        comments: {
+          text: req.body.text,
+          userId: req.user._id,
+          userPic: req.user.userPic,
+          userName: req.user.firstName
+        }
+      }
+    },
+    {
+      new: true
+    }
+  )
+  res.status(200).json({
+    response: itinerary.comments,
+    arrayOwnerCheck: itinerary.comments.filter(
+      comment => String(comment.userId) === String(req.user._id)
+    ),
+    success: true
+  }
+  )
+})
+
+exports.deleteComment = _catch(async (req = request, res = response) => {
+  const comment = await repository.getItinerary(
+    {
+      'comments._id': req.params.commentId,
+      'comments.userId': req.user._id
+    }
+  )
+  if (!comment) {
+    return res.status(404).json({
+      message: 'Error',
+      succes: false
+    })
+  }
+  const itinerary = await repository.updateItinerary({
+    'comments._id': req.params.commentId
+  },
+  {
+    $pull: {
+      comments: {
+        _id: req.params.commentId
+      }
+    }
+  },
+  {
+    new: true
+  })
+  res.status(200).json({
+    response: itinerary.comments,
+    success: true
+  })
+})
+
+exports.updateComment = _catch(async (req = request, res = response) => {
+  const comment = await repository.getItinerary(
+    {
+      'comments._id': req.params.commentId,
+      'comments.userId': req.user._id
+    }
+  )
+  if (!comment) {
+    return res.status(404).json({
+      message: 'Error',
+      succes: false
+    })
+  }
+  const itinerary = await repository.updateItinerary({
+    'comments._id': req.params.commentId
+  },
+  {
+    $set: {
+      'comments.$.text': req.body.text
+    }
+  },
+  {
+    new: true
+  })
+  res.status(200).json({
+    response: itinerary.comments,
+    success: true
+  })
+})
+
+exports.likes = _catch(async (req = request, res = response) => {
+  let itinerary = await repository.getItinerary({
+    _id: req.params.itineraryId,
+    usersLike: req.user._id
+  })
+
+  const filter = itinerary ? '$pull' : '$push'
+  const liked = !itinerary
+
+  itinerary = await repository.updateItinerary(
+    {
+      _id: req.params.itineraryId
+    },
+    {
+      [filter]: {
+        usersLike: req.user._id
+      }
+    },
+    {
+      new: true
     }
   )
 
-  const result = await repository.updateItineraryByID(
-    req.params.itineraryId,
-    itinerary[0]
-  )
-
-  res.status(200).json(
-    RequestReponse.success(
-      200,
-      {
-        response: result.comments,
-        arrayUserComments: result.comments.filter(
-          comment => String(comment.userId) === String(req.user._id)
-        )
+  let likes = parseInt(itinerary.likes)
+  itinerary = await repository.updateItinerary(
+    {
+      _id: req.params.itineraryId
+    },
+    {
+      $set: {
+        likes: likes += liked ? 1 : -1
       }
-    )
+    },
+    {
+      new: true
+    }
   )
-})
 
-exports.deleteComment = __catch(async (req = request, res = response) => {
-  const itinerary = await repository.getItineraries({ _id: req.params.itineraryId })
-
-  if (itinerary.length === 0) {
-    return res.status(404).json(
-      RequestReponse.fail(
-        'Itinerary was not found',
-        404
-      )
-    )
+  res.status(200).json({
+    success: true,
+    response: {
+      likes: itinerary.likes,
+      liked
+    }
   }
-
-  const comments = itinerary[0].comments.filter(
-    c => String(c._id) !== String(req.params.commentId)
-  )
-
-  if (comments.length === itinerary[0].comments.length) {
-    return res.status(404).json(
-      RequestReponse.fail(
-        'Comment was not found',
-        404
-      )
-    )
-  } else {
-    itinerary[0].comments = comments
-  }
-
-  await repository.updateItineraryByID(
-    req.params.itineraryId,
-    itinerary[0]
-  )
-
-  res.status(200).json(
-    RequestReponse.success(
-      200,
-      {
-        response: comments
-      }
-    )
   )
 })

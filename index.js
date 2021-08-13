@@ -1,8 +1,6 @@
 const app = require('./src')
-const port = process.env.PORT
+require('dotenv/config')
 
-app.listen(port, () => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`\nRunning: http://localhost:${port}/api`)
-  }
+app.listen(process.env.PORT || 4000, () => {
+  console.log('Listo')
 })

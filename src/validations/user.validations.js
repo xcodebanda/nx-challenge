@@ -1,6 +1,7 @@
+
 const { compareSync } = require('bcryptjs')
 const { body } = require('express-validator')
-const { userRepository: repository } = require('../repositories/mongodb')
+const { User: repository } = require('../repositories/mongoose')
 
 exports.signUpChecks = [
   body('firstName')
@@ -44,7 +45,7 @@ exports.signInChecks = [
   body('email').custom(async (email, { req }) => {
     if (!email) return
 
-    const result = await repository.getUsers({ email }, { password: 1 })
+    const result = await repository.getUsers({ email })
     if (result.length === 0) throw new Error(`${email} was not found`)
     const isPasswordValid = compareSync(req.body.password, result[0].password)
     if (!isPasswordValid) throw new Error('Password incorrect')

@@ -1,4 +1,5 @@
 module.exports = {
-  cityValidations: require('./city.validations'),
-  userValidations: require('./user.validations')
+  User: require('./user.validations'),
+  City: require('./city.validations'),
+  Itinerary: require('./itinerary.validation')
 }
