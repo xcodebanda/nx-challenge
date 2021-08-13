@@ -1,62 +1,42 @@
-const { hashSync, genSaltSync } = require('bcryptjs')
 const { request, response } = require('express')
+const { hashSync, genSaltSync } = require('bcryptjs')
 
-const { UserDTO } = require('../DTOs')
-const { generateJWT } = require('../JWT')
-const { __catch, RequestReponse } = require('../helpers')
-const { userRepository: repository } = require('../repositories/mongodb')
+const { User: DTO } = require('../dtos')
+const { generateJWT } = require('../auth')
+const { RequestCatch: _catch } = require('../helpers')
+const { User: repository } = require('../repositories/mongoose')
 
-exports.getUserByID = __catch(async (req = request, res = response) => {
-  const user = await repository.getUserByID(req.params.id)
-
-  if (!user) {
-    return res.status(404).json(
-      RequestReponse.fail('User not found', 404)
-    )
-  }
-
-  res.status(200).json(
-    RequestReponse.success(200, user)
-  )
-})
-
-exports.getUsers = __catch(async (req = request, res = response) => {
-  const opt = {}
-  if (req.query.all !== '') opt.isActive = true
-
-  const usersPromise = repository.getUsers(opt, {
-    password: 0,
-    __v: 0
-  })
-
-  const totalPromise = repository.getTotal(opt)
-  const [users, total] = await Promise.all([usersPromise, totalPromise])
-
-  const result = RequestReponse.success(200, users)
-  result.total = total
-
-  res.status(200).json(result)
-})
-
-exports.signUp = __catch(async (req = request, res = response) => {
+exports.signUp = _catch(async (req = request, res = response) => {
   req.body.password = hashSync(req.body.password, genSaltSync(10))
-  const result = await repository.addUser(req.body)
+  const user = await repository.registerUser(req.body)
 
-  const user = UserDTO.signUp(result)
+  const token = await generateJWT(user)
 
-  res.status(201).json(
-    RequestReponse.success(201, user)
-  )
+  res.status(201).json({
+    response: {
+      ...DTO.auth(user),
+      token
+    },
+    success: true
+  })
 })
 
-exports.signIn = __catch(async (req = request, res = response) => {
+exports.signIn = _catch(async (req = request, res = response) => {
   const user = await repository.getUsers({ email: req.body.email })
+  const token = await generateJWT(user[0])
 
-  const token = await generateJWT(
-    UserDTO.token(user[0])
-  )
-
-  res.status(200).json(
-    RequestReponse.success(200, token)
-  )
+  res.status(200).json({
+    success: true,
+    response: {
+      ...DTO.auth(user[0]),
+      token
+    }
+  })
 })
+
+exports.signInLS = (req = request, res = response) => {
+  res.status(200).json({
+    response: DTO.auth(req.user),
+    success: true
+  })
+}
